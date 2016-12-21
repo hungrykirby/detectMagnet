@@ -2,6 +2,9 @@
 
 #include "ofMain.h"
 #include "math.h"
+#include <ofxOsc.h>
+
+#define PORT 8000
 
 class ofApp : public ofBaseApp{
 
@@ -31,6 +34,8 @@ class ofApp : public ofBaseApp{
 		float tmpRoot(float tX, float tY, float tZ, bool xSign, bool ySign);
 		float boolCalc(float in1, float in2, bool add);
 
+		ofxOscReceiver  receiver;
+
 		int w, h;
 		int magSizeX, magSizeY, magSizeZ;
 		float maxteslaX, minteslaX;
@@ -44,4 +49,7 @@ class ofApp : public ofBaseApp{
 		float teslaX, teslaY, teslaZ;
 		
 		float rangeXYZ;
+
+		float kijunX, kijunY, kijunZ;
+		float inX, inY, inZ;
 };
