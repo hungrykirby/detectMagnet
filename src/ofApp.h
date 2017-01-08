@@ -52,4 +52,8 @@ class ofApp : public ofBaseApp{
 
 		float kijunX, kijunY, kijunZ;
 		float inX, inY, inZ;
+		float mx, my, mz; //memorize x, y, z
+
+		ofEasyCam cam;
+		ofBoxPrimitive box;
 };

@@ -3,7 +3,7 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
 	//ofSetWindowShape(2160, 1440);
-	ofSetWindowShape(400, 400);
+	ofSetWindowShape(1000, 1000);
 	maxteslaX = maxteslaY = 15; //myu
 	minteslaX = minteslaY = -15;
 	maxteslaZ = 15;
@@ -15,41 +15,56 @@ void ofApp::setup(){
 	w = ofGetWidth();
 	h = ofGetHeight();
 
-	magSizeX = 5;
-	magSizeY = 5;
-	magSizeZ = 0.5;
+	magSizeX = 50.0;
+	magSizeY = 50.0;
+	magSizeZ = 50.0;
 
 	rangeXYZ = 20;
 
-	receiver.setup(PORT);
+	receiver.setup(3333);
+
+	inX = 0, inY = 0, inZ = 0;
+
+	cam.setFov(80.0f);                 // カメラの水平視野角を８０度に設定
+	cam.setDistance(1.0f);          // カメラと見ているものの距離を1mに設定
+	cam.setPosition(0, 0, 200); // カメラの位置を設定
+	//cam.setTarget(model.getPosition()); // カメラが見る対象物を設定
+	//cam.lookAt(model.getPosition(), ofVec3f(0, -1, 0)); // 見る対象物の位置と、上向き方向を設定
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
-	inX = 0, inY = 0, inZ = 0;
 	while (receiver.hasWaitingMessages())
 	{
 		ofxOscMessage m;
 		//cout << m.getAddress() << endl;
 		receiver.getNextMessage(&m);
-		if (m.getAddress() == "/compassData") {
-			inX = m.getArgAsFloat(0);
-			inY = m.getArgAsFloat(1);
-			inZ = m.getArgAsFloat(2);
+		/*if (m.getAddress() == "/compassData") {
+			inX = m.getArgAsDouble(0);
+			inY = m.getArgAsDouble(1);
+			inZ = m.getArgAsDouble(2);
+		}*/
+		if (m.getAddress() == "/node/heading") {
+			//heading = m.getArgAsFloat(0);
+		}
+		if (m.getAddress() == "/node/raw") {
+			inX = m.getArgAsInt(0);
+			inY = m.getArgAsInt(1);
+			inZ = m.getArgAsInt(2);
 		}
 	}
 	float minXYZ;
-	minx = miny = minz = minXYZ = 50000;
+	minx = miny = minz = minXYZ = INT_MAX;
 	//Hx = ofMap(inX, 0, w, minteslaX, maxteslaX);
 	//Hy = ofMap(inY, 0, h, minteslaY, maxteslaY);
 	//Hz = ofMap(inZ, 0, 0, minteslaZ, maxteslaZ);
 	Hx = inX - kijunX;
 	Hy = inY - kijunY;
 	Hz = inZ - kijunZ;
-	//cout << "inx:" << Hx << ",iny:" << Hy << ",inz:" << Hz << endl;
+	cout << "inx:" << Hx << ",iny:" << Hy << ",inz:" << Hz << endl;
 	//-------------------
-	float n = 1.0; //interval
-	float mx, my, mz = 0.0; //memorize x, y, z
+	float n = 0.8; //interval
+	mx = my = mz = 0.0;
 	for (float x = -rangeXYZ; x <= rangeXYZ; x = x + n) {
 		for (float y = -rangeXYZ; y <= rangeXYZ; y = y + n) {
 			for (float z = -rangeXYZ; z <= rangeXYZ; z = z + n) {
@@ -69,8 +84,8 @@ void ofApp::update(){
 					mz = y;
 				}*/
 				try {
-					tmpX = calcTeslaX(x, y, z);
-					tmpY = calcTeslaY(x, y, z);
+					tmpX = calcTeslaX(x, y, z) - calcTeslaX(x, y, z - magSizeZ);
+					tmpY = calcTeslaY(x, y, z) - calcTeslaY(x, y, z - magSizeZ);
 				}
 				catch (const char * str)
 				{
@@ -78,7 +93,7 @@ void ofApp::update(){
 				}
 				
 				try {
-					tmpZ = calcTeslaZ(x, y, z);
+					tmpZ = calcTeslaZ(x, y, z) - calcTeslaZ(x, y, z - magSizeZ);
 				}
 				catch (const char * str)
 				{
@@ -142,7 +157,28 @@ float ofApp::tmpRoot(float tX, float tY, float tZ, bool xSign, bool ySign) {
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-
+	ofBackground(255);
+	
+	cam.begin();
+	
+	//ofDrawCircle(ofGetWidth()/2.0 + mx *4.0, ofGetHeight()/2.0 + my * 4.0, 20);
+	//ofTranslate(w / 2, h / 2, -10);
+	/*ofRotateX(20);
+	ofRotateY(40);
+	ofRotateZ(-5);*/
+	ofSetColor(20, 70, 5);
+	//ofDrawCircle(mx *4.0, my * 4.0, 20);
+	ofPushMatrix();
+	int boxSize = 100;
+	ofTranslate(ofMap(mx, -rangeXYZ, rangeXYZ, -boxSize/2.0, boxSize/2.0), ofMap(my, -rangeXYZ, rangeXYZ, -boxSize / 2.0, boxSize / 2.0), ofMap(mz, -rangeXYZ, rangeXYZ, -boxSize / 2.0, boxSize / 2.0));
+	ofSphere(5);
+	ofPopMatrix();
+	
+	ofSetColor(0, 0, 0, 30);
+	box.set(boxSize);
+	box.drawWireframe();
+	//ofBox(boxSize);
+	cam.end();
 }
 
 //--------------------------------------------------------------
